@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+		<title>ASC2I &mdash; Articles by asc2i</title>
+		<meta charset="utf-8" />
+		<link rel="profile" href="http://gmpg.org/xfn/11" />
+		<link rel="stylesheet" type="text/css" href="/theme/css/style.css" />
+		<link rel='stylesheet' id='oswald-css'  href='http://fonts.googleapis.com/css?family=Oswald&#038;ver=3.3.2' type='text/css' media='all' />
+		<style type="text/css">
+			body.custom-background { background-color: #f5f5f5; }
+		</style>
+		<link rel="alternate" type="application/atom+xml"
+			title="ASC2I — Flux Atom"
+			href="/" /> 
+		<!--[if lte IE 8]><script src="/theme/js/html5shiv.js"></script><![endif]-->
+</head>
+
+<body class="home blog custom-background " >
+	<div id="container">
+		<div id="header">
+				<h1 id="site-title"><a href="">ASC2I</a></h1>
+		</div><!-- /#banner -->
+		
+		<div id="menu">
+			<div class="menu-navigation-container">
+				<ul id="menu-navigation" class="menu">
+						<li class="menu-item menu-item-type-post_type menu-item-object-page"><a href="/pages/who-am-i.html">WHO AM I</a></li>
+						<li class="menu-item menu-item-type-post_type menu-item-object-page"><a href="/category/gnulinux.html">GNU/Linux</a></li>
+						<li class="menu-item menu-item-type-post_type menu-item-object-page"><a href="/category/memento-gnu.html">Memento-GNU</a></li>
+
+				</ul>
+			</div> <!--/#menu-navigation-container-->
+		</div><!-- /#menu -->
+		
+		<div class="page-title">
+	<h2>Posted by <span>asc2i</span> &hellip;</h2>
+		</div>
+	
+		<div id="contents">
+<div class="post type-post status-publish format-standard hentry category-general" id="post">
+	<div class="entry-meta">
+		<div class="date"><a href="/memento-gnulinux.html">dim. 24 mai 2015</a></div>
+		<span class="byline">By <a href="/author/asc2i.html">asc2i</a></span>
+			<span class="cat-links"><a href="/category/memento-gnu.html" title="View all posts in Memento-GNU" rel="category tag">Memento-GNU</a></span>
+	</div> <!-- /#entry-meta -->
+	<div class="main">
+		<h2 class="entry-title">
+			<a href="/memento-gnulinux.html" title="Permalink to Memento GNU/Linux" rel="bookmark">Memento GNU/Linux</a>
+		</h2>
+		<div class="entry-content">
+			<div class="section" id="installation-solution-raid">
+<h2>Installation solution RAID</h2>
+<div class="section" id="pre-requis">
+<h3>Pré-requis:</h3>
+<ul class="simple">
+<li>disposer du paquet mdadm</li>
+<li>avoir plusieurs disques dédiés pour le RAID</li>
+</ul>
+<pre class="code bash literal-block">
+<span class="c"># Installation debian paquet mdadm
+</span><span class="nv">$ </span>aptitude install mdadm -y
+
+<span class="c"># Installation distribution RHEL mdadm
+</span><span class="nv">$ </span>yum install mdadm
+</pre>
+<ol class="arabic simple">
+<li>Première étape, configurer le RAID par l'intermédiaire de l'outil <strong>mdadm</strong>, dans notre exemple il s'agit d'un RAID de niveau 1 basé sur trois disques dont un réservé comme spare.</li>
+</ol>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --create --verbose /dev/md0 --level<span class="o">=</span><span class="m">1</span> --raid-devices<span class="o">=</span><span class="m">2</span> --spare-devices<span class="o">=</span><span class="m">1</span> /dev/sd<span class="o">[</span>c-e<span class="o">]</span>
+</pre>
+<ol class="arabic simple" start="2">
+<li>Suivre l'opération en temps réel pour contrôler le bon déroulement de la création</li>
+</ol>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>watch mdadm --detail --verbose /dev/md0
+</pre>
+<p>Ensuite, il nous faut renseigner le fichier mdadm.conf, attention l'emplacement peut différer selon les distributions, dans notre exemple nous réalisons l'opération sous une distribution Debian</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --detail --brief /dev/md0 &gt;&gt; /etc/mdadm/mdadm.conf
+</pre>
+<p>Contrôler les paramétrages de la mise en place de notre RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>cat /proc/mdstat
+<span class="nv">$ </span>mdadm --verbose --scan
+</pre>
+<p>Mettre un filesystem sur notre RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mkfs.ext4 /dev/md0
+</pre>
+<p>Renseigner le fstab pour que le montage soit effectif à chaque démarrage</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>blkid -o <span class="nb">export</span> /dev/md0 <span class="p">|</span> grep UUID &gt;&gt; /etc/fstab
+</pre>
+<p>Vérifier que le montage soit opérationnel avec la commande mount</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mount /dev/md0
+</pre>
+</div>
+</div>
+<div class="section" id="quelques-precisions">
+<h2>Quelques précisions</h2>
+<p>Simuler une panne dans la solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm /dev/md0 --fail /dev/sde
+</pre>
+<p>Arrêter la solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --stop /dev/md0
+</pre>
+<p>Ajouter un spare (ou autre) à notre solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm /dev/md0 --add /dev/sdf
+</pre>
+<p>Supprimer un disque de notre solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm /dev/md0 --remove /dev/sdf
+</pre>
+<p>Remettre à zéro les superblocs</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --zero-superbloc /dev/sd<span class="o">[</span>c-f<span class="o">]</span>
+</pre>
+</div>
+
+		</div> <!--/#entry-content-->
+    		<span class="tag-links"><strong>Tagged</strong>
+ <a href="/tag/commandes-administration.html" rel="tag">commandes-administration</a>,  <a href="/tag/memento-gnu-linux.html" rel="tag">memento-gnu-linux</a>    		</span>
+	</div> <!--/#main-->
+</div>  <!--/#post--><div class="post type-post status-publish format-standard hentry category-general" id="post">
+	<div class="entry-meta">
+		<div class="date"><a href="/raid-linux.html">sam. 23 mai 2015</a></div>
+		<span class="byline">By <a href="/author/asc2i.html">asc2i</a></span>
+			<span class="cat-links"><a href="/category/gnulinux.html" title="View all posts in GNU/Linux" rel="category tag">GNU/Linux</a></span>
+	</div> <!-- /#entry-meta -->
+	<div class="main">
+		<h2 class="entry-title">
+			<a href="/raid-linux.html" title="Permalink to RAID Linux" rel="bookmark">RAID Linux</a>
+		</h2>
+		<div class="entry-content">
+			<div class="section" id="pre-requis">
+<h2>Pré-requis</h2>
+<pre class="code bash literal-block">
+<span class="c"># Installation debian paquet mdadm
+</span><span class="nv">$ </span>aptitude install mdadm -y
+
+<span class="c"># Installation distribution RHEL mdadm
+</span><span class="nv">$ </span>yum install mdadm
+</pre>
+<div class="section" id="mise-en-place-du-raid">
+<h3>Mise en place du RAID</h3>
+<p>Première étape, configurer le RAID par l'intermédiaire de l'outil <strong>mdadm</strong>, dans notre exemple il s'agit d'un RAID de niveau 1 basé sur trois disques dont un réservé comme spare.</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --create --verbose /dev/md0 --level<span class="o">=</span><span class="m">1</span> --raid-devices<span class="o">=</span><span class="m">2</span> --spare-devices<span class="o">=</span><span class="m">1</span> /dev/sd<span class="o">[</span>c-e<span class="o">]</span>
+</pre>
+<p>Suivre l'opération en temps réel pour contrôler le bon déroulement de la création</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>watch mdadm --detail --verbose /dev/md0
+</pre>
+<p>Ensuite, il nous faut renseigner le fichier mdadm.conf, attention l'emplacement peut différer selon les distributions, dans notre exemple nous réalisons l'opération sous une distribution Debian</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --detail --brief /dev/md0 &gt;&gt; /etc/mdadm/mdadm.conf
+</pre>
+<p>Contrôler les paramétrages de la mise en place de notre RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>cat /proc/mdstat
+<span class="nv">$ </span>mdadm --verbose --scan
+</pre>
+<p>Mettre un filesystem sur notre RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mkfs.ext4 /dev/md0
+</pre>
+<p>Renseigner le fstab pour que le montage soit effectif à chaque démarrage</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>blkid -o <span class="nb">export</span> /dev/md0 <span class="p">|</span> grep UUID &gt;&gt; /etc/fstab
+</pre>
+<p>Vérifier que le montage soit opérationnel avec la commande mount</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mount /dev/md0
+</pre>
+</div>
+<div class="section" id="quelques-precisions">
+<h3>Quelques précisions</h3>
+<p>Simuler une panne dans la solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm /dev/md0 --fail /dev/sde
+</pre>
+<p>Arrêter la solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --stop /dev/md0
+</pre>
+<p>Ajouter un spare (ou autre) à notre solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm /dev/md0 --add /dev/sdf
+</pre>
+<p>Supprimer un disque de notre solution RAID</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm /dev/md0 --remove /dev/sdf
+</pre>
+<p>Remettre à zéro les superblocs</p>
+<pre class="code bash literal-block">
+<span class="nv">$ </span>mdadm --zero-superbloc /dev/sd<span class="o">[</span>c-f<span class="o">]</span>
+</pre>
+</div>
+</div>
+
+		</div> <!--/#entry-content-->
+    		<span class="tag-links"><strong>Tagged</strong>
+ <a href="/tag/raid-linux.html" rel="tag">raid-linux</a>    		</span>
+	</div> <!--/#main-->
+</div>  <!--/#post--><div class="navigation">
+</div>
+		</div>
+		
+		<div id="footer">
+			<p>Powered by <a href="http://getpelican.com">Pelican</a>, theme by <a href="http://bunnyman.info">tBunnyMan</a>.</p>
+		</div><!-- /#footer -->
+	</div><!-- /#container -->
+	<div style="display:none"></div>
+</body>
+</html>
